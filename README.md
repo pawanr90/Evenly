@@ -129,6 +129,137 @@ Once the backend server is running, you can access the API documentation at:
 - Components are in `frontend/components`
 - API client is in `frontend/lib/api.ts`
 
+## Development Workflow
+
+### Git Branch Strategy
+
+We follow a simplified Git Flow strategy:
+
+1. `main` - Production-ready code
+2. `develop` - Integration branch for features
+3. Feature branches - For individual features/fixes
+
+### Feature Development Process
+
+1. **Start a New Feature**
+   ```bash
+   # Create and switch to a new feature branch
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Development Work**
+   - Make your changes
+   - Write tests if applicable
+   - Commit frequently with meaningful messages
+   ```bash
+   git add .
+   git commit -m "feat: add user authentication"
+   ```
+
+3. **Keep Your Branch Updated**
+   ```bash
+   # While on your feature branch
+   git fetch origin
+   git rebase origin/develop
+   ```
+
+4. **Complete the Feature**
+   ```bash
+   # Push your feature branch
+   git push origin feature/your-feature-name
+   ```
+   - Create a Pull Request (PR) to merge into `develop`
+   - Get code review
+   - Address review comments
+   - Merge when approved
+
+### Commit Message Convention
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code changes that neither fix bugs nor add features
+- `test:` - Adding or modifying tests
+- `chore:` - Changes to build process or auxiliary tools
+
+Example:
+```bash
+git commit -m "feat: add expense sharing functionality"
+git commit -m "fix: resolve user authentication issue"
+git commit -m "docs: update API documentation"
+```
+
+### Code Review Process
+
+1. **Before Submitting a PR**
+   - Ensure all tests pass
+   - Update documentation if needed
+   - Follow the project's coding standards
+   - Squash commits if necessary
+
+2. **PR Description Template**
+   ```markdown
+   ## Description
+   [Describe your changes]
+
+   ## Type of Change
+   - [ ] New feature
+   - [ ] Bug fix
+   - [ ] Documentation update
+   - [ ] Code refactor
+   - [ ] Performance improvement
+
+   ## Testing
+   - [ ] Unit tests added/updated
+   - [ ] Manual testing completed
+
+   ## Screenshots (if applicable)
+   [Add screenshots here]
+
+   ## Additional Notes
+   [Any additional information]
+   ```
+
+3. **Review Process**
+   - At least one approval required
+   - All CI checks must pass
+   - No merge conflicts
+   - Follow up on review comments
+
+### Release Process
+
+1. **Prepare Release**
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b release/v1.x.x
+   ```
+
+2. **Version Bump**
+   - Update version numbers
+   - Update changelog
+   - Commit changes
+
+3. **Merge to Main**
+   ```bash
+   git checkout main
+   git merge release/v1.x.x
+   git tag -a v1.x.x -m "Release v1.x.x"
+   git push origin main --tags
+   ```
+
+4. **Back to Develop**
+   ```bash
+   git checkout develop
+   git merge release/v1.x.x
+   git push origin develop
+   ```
+
 ## Contributing
 
 1. Fork the repository
