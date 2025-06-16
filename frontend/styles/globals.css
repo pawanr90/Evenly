@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 17, 24, 39;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Custom dark theme styles */
+.dark {
+  --tw-bg-opacity: 1;
+  background-color: rgb(17 24 39 / var(--tw-bg-opacity));
+}
+
+.dark .bg-white {
+  background-color: rgb(31 41 55 / var(--tw-bg-opacity));
+}
+
+.dark .text-gray-900 {
+  color: rgb(229 231 235 / var(--tw-text-opacity));
+}
+
+.dark .text-gray-700 {
+  color: rgb(209 213 219 / var(--tw-text-opacity));
+}
+
+.dark .text-gray-500 {
+  color: rgb(156 163 175 / var(--tw-text-opacity));
+}
+
+.dark .border-gray-200 {
+  border-color: rgb(55 65 81 / var(--tw-border-opacity));
+} 
