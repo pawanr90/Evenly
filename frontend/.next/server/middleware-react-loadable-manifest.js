@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST="{\"_app.tsx -> flowbite\":{\"id\":\"_app.tsx -> flowbite\",\"files\":[\"static/chunks/node_modules_flowbite_lib_esm_index_js.js\"]}}"
