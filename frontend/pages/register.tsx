@@ -1,109 +1,161 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Card, Label, TextInput } from 'flowbite-react';
+import { useAppDispatch } from '../store/hooks';
+import { setCredentials } from '../store/slices/authSlice';
 import { auth } from '../lib/api';
 
 export default function Register() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await auth.register(name, email, password);
-      // After successful registration, redirect to login
-      router.push('/login');
-    } catch (err: any) {
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError('An error occurred during registration');
-      }
+      console.log('Attempting registration with:', { name, email });
+      const response = await auth.register(name, email, password);
+      console.log('Registration response:', response);
+      dispatch(setCredentials({ user: response.user, token: response.access_token }));
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Registration error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      setError(
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        'An error occurred during registration'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md bg-gray-800">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-white">Create an account</h2>
-          <p className="mt-2 text-sm text-gray-300">
-            Join Evenly to start sharing expenses
-          </p>
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+            Create your account
+          </h2>
         </div>
-
-        {error && (
-          <div className="mt-4 p-4 text-sm text-red-400 bg-red-900/50 rounded-lg">
-            {error}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="name" className="sr-only">
+                Full Name
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Full Name"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className="sr-only">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Confirm Password"
+              />
+            </div>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {error && (
+            <div className="rounded-md bg-red-900/50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-200">
+                    {error}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
-            <Label htmlFor="name" className="text-gray-300">Full Name</Label>
-            <TextInput
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="bg-gray-700 border-gray-600 text-white"
-            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
           </div>
-
-          <div>
-            <Label htmlFor="email" className="text-gray-300">Email address</Label>
-            <TextInput
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-gray-700 border-gray-600 text-white"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password" className="text-gray-300">Password</Label>
-            <TextInput
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-gray-700 border-gray-600 text-white"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
 
           <div className="text-center">
             <p className="text-sm text-gray-300">
               Already have an account?{' '}
-              <a href="/login" className="text-blue-400 hover:text-blue-300">
+              <a href="/login" className="text-indigo-400 hover:text-indigo-300">
                 Sign in
               </a>
             </p>
           </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 } 

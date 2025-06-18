@@ -5,36 +5,97 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Enable sending cookies
 });
 
 // Add request interceptor to include auth token and set content type
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  
   // Set content type to JSON for all requests except login
   if (!config.url?.includes('/auth/login')) {
     config.headers['Content-Type'] = 'application/json';
   } else {
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
   }
+
+  // Only add token for non-login requests
+  if (token && !config.url?.includes('/auth/login')) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  console.log('Request config:', config);
   return config;
 });
+
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response:', response);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: error.config
+    });
+
+    // If the error is due to an invalid token (401), redirect to login
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Auth endpoints
 export const auth = {
   login: async (email: string, password: string) => {
-    const formData = new URLSearchParams();
-    formData.append('username', email);
-    formData.append('password', password);
-    const response = await api.post('/auth/login', formData.toString());
-    return response.data;
+    try {
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
+      console.log('Login request:', {
+        url: `${API_URL}/auth/login`,
+        data: formData.toString()
+      });
+      const response = await api.post('/auth/login', formData.toString());
+      return response.data;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   },
   register: async (name: string, email: string, password: string) => {
     const response = await api.post('/auth/register', { name, email, password });
     return response.data;
   },
+  logout: async () => {
+    try {
+      localStorage.removeItem('token');
+      return true;
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  },
+  checkAuth: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+      
+      const response = await api.get('/auth/me');
+      return !!response.data;
+    } catch (error) {
+      return false;
+    }
+  }
 };
 
 // Group endpoints

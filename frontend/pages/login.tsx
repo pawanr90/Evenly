@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Card, Label, TextInput } from 'flowbite-react';
+import { useAppDispatch } from '../store/hooks';
+import { setCredentials } from '../store/slices/authSlice';
 import { auth } from '../lib/api';
 
 export default function Login() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,16 +18,31 @@ export default function Login() {
     setLoading(true);
 
     try {
+      console.log('Attempting login with email:', email);
       const response = await auth.login(email, password);
-      localStorage.setItem('token', response.access_token);
-      router.push('/dashboard');
-    } catch (err: any) {
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err.message) {
-        setError(err.message);
+      console.log('Login response:', response);
+      
+      if (response.access_token) {
+        dispatch(setCredentials({ user: response.user, token: response.access_token }));
+        router.push('/dashboard');
       } else {
-        setError('An error occurred during login');
+        setError('Invalid response from server');
+      }
+    } catch (error: any) {
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      
+      if (error.response?.data?.detail) {
+        setError(error.response.data.detail);
+      } else if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.message) {
+        setError(error.message);
+      } else {
+        setError('An error occurred during login. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -33,64 +50,81 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md bg-gray-800">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-white">Welcome back</h2>
-          <p className="mt-2 text-sm text-gray-300">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Sign in to your account
-          </p>
+          </h2>
         </div>
-
-        {error && (
-          <div className="mt-4 p-4 text-sm text-red-400 bg-red-900/50 rounded-lg">
-            {error}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+              />
+            </div>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-300">Email address</Label>
-            <TextInput
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-gray-700 border-gray-600 text-white"
-            />
+          {error && (
+            <div className="rounded-md bg-red-900/50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-200">
+                    {error}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-300">Password</Label>
-            <TextInput
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-gray-700 border-gray-600 text-white"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
 
           <div className="text-center">
             <p className="text-sm text-gray-300">
               Don't have an account?{' '}
-              <a href="/register" className="text-blue-400 hover:text-blue-300">
+              <a href="/register" className="text-indigo-400 hover:text-indigo-300">
                 Create one
               </a>
             </p>
           </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 } 

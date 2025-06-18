@@ -7,26 +7,26 @@ export default function Expenses() {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Expenses</h1>
+          <h1 className="text-2xl font-bold text-white">Expenses</h1>
           <Button>
             <HiPlus className="mr-2 h-5 w-5" />
             Add Expense
           </Button>
         </div>
 
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <Table>
             <Table.Head>
-              <Table.HeadCell>Description</Table.HeadCell>
-              <Table.HeadCell>Amount</Table.HeadCell>
-              <Table.HeadCell>Paid by</Table.HeadCell>
-              <Table.HeadCell>Date</Table.HeadCell>
-              <Table.HeadCell>Group</Table.HeadCell>
-              <Table.HeadCell>Actions</Table.HeadCell>
+              <Table.HeadCell className="text-gray-300">Description</Table.HeadCell>
+              <Table.HeadCell className="text-gray-300">Amount</Table.HeadCell>
+              <Table.HeadCell className="text-gray-300">Paid by</Table.HeadCell>
+              <Table.HeadCell className="text-gray-300">Date</Table.HeadCell>
+              <Table.HeadCell className="text-gray-300">Group</Table.HeadCell>
+              <Table.HeadCell className="text-gray-300">Actions</Table.HeadCell>
             </Table.Head>
             <Table.Body>
               <Table.Row>
-                <Table.Cell colSpan={6} className="text-center text-gray-500">
+                <Table.Cell colSpan={6} className="text-center text-gray-400">
                   No expenses found
                 </Table.Cell>
               </Table.Row>
