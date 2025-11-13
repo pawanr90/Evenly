@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react';
 import { Card, Button } from 'flowbite-react';
 import { HiPlus } from 'react-icons/hi';
 import Layout from '../components/Layout';
-import { expenses, users } from '../lib/api';
+import { expenses, users, auth } from '../lib/api';
 import { Expense, Balance } from '../types';
 import AddExpenseModal from '../components/AddExpenseModal';
+import { useRouter } from 'next/router';
+import { useAppSelector } from '../store/hooks';
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
@@ -14,8 +18,26 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    const checkAuth = async () => {
+      const isAuth = await auth.checkAuth();
+      if (!isAuth) {
+        router.push('/login');
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated]);
 
   const fetchDashboardData = async () => {
     try {
@@ -63,6 +85,10 @@ export default function Dashboard() {
       }
     }
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Layout>
