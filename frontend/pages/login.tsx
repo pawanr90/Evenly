@@ -50,81 +50,122 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Sign in to your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
+    <div className="min-h-screen bg-gray-950">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:flex-row">
+        {/* Left: Auth card */}
+        <div className="flex w-full items-center justify-center px-6 py-12 sm:px-8 lg:w-1/2 lg:px-12">
+          <div className="w-full max-w-md">
+            <div className="mb-8 flex items-center justify-center gap-3">
+              <img src="/evenly-logo.svg" alt="Evenly" className="h-10 w-10" />
+              <span className="text-2xl font-semibold text-white">Evenly</span>
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-800 text-white placeholder-gray-400 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
-          </div>
 
-          {error && (
-            <div className="rounded-md bg-red-900/50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-200">
-                    {error}
-                  </h3>
+            <h1 className="text-3xl font-semibold tracking-tight text-white">Welcome back</h1>
+            <p className="mt-2 text-sm text-gray-400">Sign in to split expenses, settle up, and keep it fair.</p>
+
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="mb-2 block text-sm text-gray-300">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-transparent transition focus:border-indigo-500 focus:ring-indigo-500/30"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label htmlFor="password" className="block text-sm text-gray-300">
+                      Password
+                    </label>
+                    <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-transparent transition focus:border-indigo-500 focus:ring-indigo-500/30"
+                    placeholder="••••••••"
+                  />
                 </div>
               </div>
+
+              {error && (
+                <div className="rounded-lg border border-red-800 bg-red-900/40 px-4 py-3">
+                  <p className="text-sm text-red-200">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Signing in…' : 'Sign in'}
+              </button>
+
+              <p className="text-center text-sm text-gray-400">
+                Don't have an account?{' '}
+                <a href="/register" className="text-indigo-400 hover:text-indigo-300">
+                  Create one
+                </a>
+              </p>
+            </form>
+          </div>
+        </div>
+
+        {/* Right: Marketing/info panel */}
+        <div className="relative hidden flex-1 items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-500 lg:flex">
+          <div className="pointer-events-none absolute inset-0 opacity-20" style={{backgroundImage:'radial-gradient(circle at 20% 20%, rgba(255,255,255,.6) 0, transparent 40%), radial-gradient(circle at 80% 0%, rgba(255,255,255,.4) 0, transparent 35%), radial-gradient(circle at 10% 80%, rgba(255,255,255,.35) 0, transparent 40%)'}} />
+          <div className="relative z-10 mx-auto max-w-lg px-8 py-16 text-white">
+            <div className="mb-8 flex items-center gap-3">
+              <img src="/evenly-logo.svg" alt="Evenly" className="h-8 w-8" />
+              <span className="text-xl font-semibold">Evenly</span>
             </div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-300">
-              Don't have an account?{' '}
-              <a href="/register" className="text-indigo-400 hover:text-indigo-300">
-                Create one
-              </a>
+            <h2 className="text-3xl font-semibold leading-tight">Split expenses the modern way</h2>
+            <p className="mt-3 text-white/90">
+              Track shared costs, settle up instantly, and keep every group in balance.
             </p>
+
+            <ul className="mt-8 space-y-4 text-sm">
+              <li className="flex items-start gap-3">
+                <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-white/90" />
+                Real-time balances across groups
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-white/90" />
+                Smart settlement suggestions
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-white/90" />
+                Works great on mobile and desktop
+              </li>
+            </ul>
+
+            <div className="mt-10 rounded-xl bg-white/10 p-4 text-sm backdrop-blur">
+              <p>
+                “Evenly makes trips with friends so much easier. No more spreadsheets.”
+              </p>
+              <p className="mt-2 text-white/80">— A happy traveler</p>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
-} 
+}
+ 
