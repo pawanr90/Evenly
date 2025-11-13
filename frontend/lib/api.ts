@@ -1,28 +1,52 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 import { Expense, Group, User } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const normalizeApiBase = (url: string): string => {
+  if (!url) return 'http://localhost:8000/api/v1';
+  let base = url.trim();
+  // remove trailing slash
+  if (base.endsWith('/')) base = base.slice(0, -1);
+  // already like /api/v{n}
+  if (/\/api\/v\d+$/.test(base)) return base;
+  // ends with /api
+  if (/\/api$/.test(base)) return `${base}/v1`;
+  // otherwise append /api/v1
+  return `${base}/api/v1`;
+};
+
+const API_URL = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // Enable sending cookies
 });
 
+const isBrowser = typeof window !== 'undefined';
+const getStoredToken = () => (isBrowser ? window.localStorage.getItem('token') : null);
+const removeStoredToken = () => {
+  if (isBrowser) {
+    window.localStorage.removeItem('token');
+  }
+};
+
 // Add request interceptor to include auth token and set content type
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  
+  const token = getStoredToken();
+  const headers = AxiosHeaders.from(config.headers);
+
   // Set content type to JSON for all requests except login
   if (!config.url?.includes('/auth/login')) {
-    config.headers['Content-Type'] = 'application/json';
+    headers.set('Content-Type', 'application/json');
   } else {
-    config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    headers.set('Content-Type', 'application/x-www-form-urlencoded');
   }
 
   // Only add token for non-login requests
   if (token && !config.url?.includes('/auth/login')) {
-    config.headers.Authorization = `Bearer ${token}`;
+    headers.set('Authorization', `Bearer ${token}`);
   }
+
+  config.headers = headers;
 
   console.log('Request config:', config);
   return config;
@@ -44,8 +68,8 @@ api.interceptors.response.use(
 
     // If the error is due to an invalid token (401), redirect to login
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      removeStoredToken();
+      if (isBrowser && !window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
     }
@@ -78,7 +102,7 @@ export const auth = {
   },
   logout: async () => {
     try {
-      localStorage.removeItem('token');
+      removeStoredToken();
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -87,7 +111,7 @@ export const auth = {
   },
   checkAuth: async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getStoredToken();
       if (!token) return false;
       
       const response = await api.get('/auth/me');
