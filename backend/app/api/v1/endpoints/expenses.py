@@ -16,39 +16,55 @@ def create_expense(
     expense_in: schemas.ExpenseCreate,
     current_user: User = Depends(get_current_user),
 ) -> Any:
-    if len(expense_in.participant_ids) != len(expense_in.amounts_paid) or len(expense_in.participant_ids) != len(expense_in.amounts_owed):
+    participant_ids = expense_in.participant_ids
+    if len(participant_ids) != len(expense_in.amounts_paid) or len(participant_ids) != len(expense_in.amounts_owed):
         raise HTTPException(
             status_code=400,
             detail="Number of participants must match amounts paid and owed",
         )
-    
+    if expense_in.amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than zero")
+    if len(set(participant_ids)) != len(participant_ids):
+        raise HTTPException(status_code=400, detail="Participants must be unique")
+    if current_user.id not in participant_ids:
+        raise HTTPException(status_code=400, detail="You must be a participant in the expense")
+    if any(a < 0 for a in expense_in.amounts_paid + expense_in.amounts_owed):
+        raise HTTPException(status_code=400, detail="Amounts cannot be negative")
+    if abs(sum(expense_in.amounts_paid) - expense_in.amount) > 0.01:
+        raise HTTPException(status_code=400, detail="Amounts paid must add up to the expense amount")
+    if abs(sum(expense_in.amounts_owed) - expense_in.amount) > 0.01:
+        raise HTTPException(status_code=400, detail="Amounts owed must add up to the expense amount")
+
+    found_ids = {u.id for u in db.query(User.id).filter(User.id.in_(participant_ids)).all()}
+    missing = [pid for pid in participant_ids if pid not in found_ids]
+    if missing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"User with id {missing[0]} not found",
+        )
+
     expense = Expense(
         description=expense_in.description,
         amount=expense_in.amount,
         created_by_id=current_user.id,
     )
     db.add(expense)
-    db.commit()
-    db.refresh(expense)
-    
+    db.flush()
+
     # Add participants and their amounts
-    for i, participant_id in enumerate(expense_in.participant_ids):
-        participant = db.query(User).filter(User.id == participant_id).first()
-        if not participant:
-            raise HTTPException(
-                status_code=404,
-                detail=f"User with id {participant_id} not found",
-            )
-        expense.participants.append(participant)
-        db.execute(
-            expense_participants.insert().values(
-                expense_id=expense.id,
-                user_id=participant_id,
-                amount_paid=expense_in.amounts_paid[i],
-                amount_owed=expense_in.amounts_owed[i]
-            )
-        )
-    
+    db.execute(
+        expense_participants.insert(),
+        [
+            {
+                "expense_id": expense.id,
+                "user_id": participant_id,
+                "amount_paid": expense_in.amounts_paid[i],
+                "amount_owed": expense_in.amounts_owed[i],
+            }
+            for i, participant_id in enumerate(participant_ids)
+        ],
+    )
+
     db.commit()
     db.refresh(expense)
     return expense
@@ -66,6 +82,7 @@ def read_expenses(
             (Expense.created_by_id == current_user.id) |
             (Expense.participants.any(id=current_user.id))
         )
+        .order_by(Expense.date.desc())
         .offset(skip)
         .limit(limit)
         .all()

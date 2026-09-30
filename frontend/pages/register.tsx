@@ -26,19 +26,15 @@ export default function Register() {
     setLoading(true);
 
     try {
-      console.log('Attempting registration with:', { name, email });
-      const response = await auth.register(name, email, password);
-      console.log('Registration response:', response);
-      dispatch(setCredentials({ user: response.user, token: response.access_token }));
+      await auth.register(name, email, password);
+      const credentials = await auth.loginAndFetchUser(email, password);
+      dispatch(setCredentials(credentials));
       router.push('/dashboard');
     } catch (error: any) {
-      console.error('Registration error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
+      const detail = error.response?.data?.detail;
       setError(
-        error.response?.data?.detail ||
+        (typeof detail === 'string' && detail) ||
+        (Array.isArray(detail) && detail[0]?.msg) ||
         error.response?.data?.message ||
         error.message ||
         'An error occurred during registration'

@@ -16,6 +16,6 @@ class User(Base):
     
     # Relationships
     expenses_created = relationship("Expense", back_populates="created_by")
-    expenses_participated = relationship("Expense", secondary="expense_participants", back_populates="participants")
+    expenses_participated = relationship("Expense", secondary="expense_participants", back_populates="participants", viewonly=True)
     settlements_paid = relationship("Settlement", foreign_keys="Settlement.payer_id", back_populates="payer")
     settlements_received = relationship("Settlement", foreign_keys="Settlement.payee_id", back_populates="payee") 

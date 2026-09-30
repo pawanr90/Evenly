@@ -1,5 +1,5 @@
 import axios, { AxiosHeaders } from 'axios';
-import { Expense, Group, User } from '../types';
+import { ExpenseCreate, Group, User } from '../types';
 
 const normalizeApiBase = (url: string): string => {
   if (!url) return 'http://localhost:8000/api/v1';
@@ -23,6 +23,11 @@ const api = axios.create({
 
 const isBrowser = typeof window !== 'undefined';
 const getStoredToken = () => (isBrowser ? window.localStorage.getItem('token') : null);
+const setStoredToken = (token: string) => {
+  if (isBrowser) {
+    window.localStorage.setItem('token', token);
+  }
+};
 const removeStoredToken = () => {
   if (isBrowser) {
     window.localStorage.removeItem('token');
@@ -47,25 +52,13 @@ api.interceptors.request.use((config) => {
   }
 
   config.headers = headers;
-
-  console.log('Request config:', config);
   return config;
 });
 
 // Add response interceptor for better error handling
 api.interceptors.response.use(
-  (response) => {
-    console.log('Response:', response);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('API Error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      config: error.config
-    });
-
     // If the error is due to an invalid token (401), redirect to login
     if (error.response?.status === 401) {
       removeStoredToken();
@@ -81,20 +74,21 @@ api.interceptors.response.use(
 // Auth endpoints
 export const auth = {
   login: async (email: string, password: string) => {
-    try {
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
-      console.log('Login request:', {
-        url: `${API_URL}/auth/login`,
-        data: formData.toString()
-      });
-      const response = await api.post('/auth/login', formData.toString());
-      return response.data;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
+    const response = await api.post('/auth/login', formData.toString());
+    return response.data;
+  },
+  // Logs in, stores the token, and returns it along with the user's profile
+  loginAndFetchUser: async (email: string, password: string): Promise<{ user: User; token: string }> => {
+    const { access_token } = await auth.login(email, password);
+    if (!access_token) {
+      throw new Error('Invalid response from server');
     }
+    setStoredToken(access_token);
+    const user = await users.getProfile();
+    return { user, token: access_token };
   },
   register: async (name: string, email: string, password: string) => {
     const response = await api.post('/auth/register', { name, email, password });
@@ -144,7 +138,7 @@ export const expenses = {
     const response = await api.get('/expenses');
     return response.data;
   },
-  create: async (expense: Partial<Expense>) => {
+  create: async (expense: ExpenseCreate) => {
     const response = await api.post('/expenses', expense);
     return response.data;
   },
@@ -156,8 +150,12 @@ export const expenses = {
 
 // User endpoints
 export const users = {
-  getProfile: async () => {
+  getProfile: async (): Promise<User> => {
     const response = await api.get('/auth/me');
+    return response.data;
+  },
+  lookupByEmail: async (email: string): Promise<User> => {
+    const response = await api.get('/users/lookup', { params: { email } });
     return response.data;
   },
   updateProfile: async (user: Partial<User>) => {
