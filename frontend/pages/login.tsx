@@ -18,23 +18,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      console.log('Attempting login with email:', email);
-      const response = await auth.login(email, password);
-      console.log('Login response:', response);
-      
-      if (response.access_token) {
-        dispatch(setCredentials({ user: response.user, token: response.access_token }));
-        router.push('/dashboard');
-      } else {
-        setError('Invalid response from server');
-      }
+      const credentials = await auth.loginAndFetchUser(email, password);
+      dispatch(setCredentials(credentials));
+      router.push('/dashboard');
     } catch (error: any) {
-      console.error('Login error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      
       if (error.response?.data?.detail) {
         setError(error.response.data.detail);
       } else if (error.response?.data?.message) {

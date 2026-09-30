@@ -25,6 +25,14 @@ export interface Expense {
   participants: User[];
 }
 
+export interface ExpenseCreate {
+  description: string;
+  amount: number;
+  participant_ids: string[];
+  amounts_paid: number[];
+  amounts_owed: number[];
+}
+
 export interface Balance {
   userId: string;
   amount: number;

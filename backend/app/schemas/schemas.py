@@ -1,17 +1,14 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 
 # User schemas
 class UserBase(BaseModel):
     email: EmailStr
-    full_name: str
-
-class UserCreate(UserBase):
-    password: str
+    name: str
 
 class User(UserBase):
-    id: int
+    id: str
     is_active: bool
 
     class Config:
@@ -31,6 +28,7 @@ class Expense(ExpenseBase):
     id: int
     date: datetime
     created_by_id: str
+    created_by: User
     participants: List[User]
 
     class Config:
@@ -39,8 +37,8 @@ class Expense(ExpenseBase):
 # Settlement schemas
 class SettlementBase(BaseModel):
     amount: float
-    payer_id: int
-    payee_id: int
+    payer_id: str
+    payee_id: str
 
 class SettlementCreate(SettlementBase):
     pass
@@ -54,11 +52,3 @@ class Settlement(SettlementBase):
 
     class Config:
         from_attributes = True
-
-# Token schemas
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None 

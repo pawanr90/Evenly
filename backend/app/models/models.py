@@ -25,7 +25,7 @@ class Expense(Base):
     
     # Relationships
     created_by = relationship("User", back_populates="expenses_created")
-    participants = relationship("User", secondary=expense_participants, back_populates="expenses_participated")
+    participants = relationship("User", secondary=expense_participants, back_populates="expenses_participated", viewonly=True)
 
 class Settlement(Base):
     __tablename__ = "settlements"

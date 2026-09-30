@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { Card, Button } from 'flowbite-react';
 import { HiPlus } from 'react-icons/hi';
 import Layout from '../components/Layout';
-import { expenses, users, auth } from '../lib/api';
-import { Expense, Balance } from '../types';
+import { expenses } from '../lib/api';
+import { Expense, ExpenseCreate, Balance } from '../types';
 import AddExpenseModal from '../components/AddExpenseModal';
 import { useRouter } from 'next/router';
 import { useAppSelector } from '../store/hooks';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, initialized, user } = useAppSelector((state) => state.auth);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
@@ -18,20 +18,10 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = await auth.checkAuth();
-      if (!isAuth) {
-        router.push('/login');
-      }
-    };
-    checkAuth();
-  }, [router]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
+    if (initialized && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [initialized, isAuthenticated, router]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,17 +32,16 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [expensesData, userData] = await Promise.all([
-        expenses.getAll(),
-        users.getProfile(),
-      ]);
+      const expensesData = await expenses.getAll();
       setRecentExpenses(expensesData.slice(0, 5)); // Get last 5 expenses
       // Calculate balances based on expenses
       // This is a simplified version - you'll need to implement proper balance calculation
-      setBalances([
-        { userId: userData.id, amount: 0, type: 'owed' },
-        { userId: userData.id, amount: 0, type: 'owing' },
-      ]);
+      if (user) {
+        setBalances([
+          { userId: user.id, amount: 0, type: 'owed' },
+          { userId: user.id, amount: 0, type: 'owing' },
+        ]);
+      }
     } catch (err: any) {
       if (err.response?.data?.detail) {
         setError(err.response.data.detail);
@@ -66,27 +55,13 @@ export default function Dashboard() {
     }
   };
 
-  const handleAddExpense = async (expense: any) => {
-    try {
-      setError('');
-      const response = await expenses.create(expense);
-      if (response) {
-        await fetchDashboardData();
-        setShowAddExpense(false);
-      }
-    } catch (err: any) {
-      console.error('Error creating expense:', err);
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError('Failed to add expense');
-      }
-    }
+  // Errors propagate to AddExpenseModal, which shows them and stays open
+  const handleAddExpense = async (expense: ExpenseCreate) => {
+    await expenses.create(expense);
+    await fetchDashboardData();
   };
 
-  if (!isAuthenticated) {
+  if (!initialized || !isAuthenticated) {
     return null;
   }
 
